@@ -1,0 +1,69 @@
+# AssemblyAI Skill for Claude Code
+
+A [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code/skills) that gives Claude accurate, up-to-date knowledge of AssemblyAI's speech-to-text APIs, SDKs, and voice agent integrations.
+
+## Why a skill?
+
+Claude's training data contains outdated AssemblyAI patterns — deprecated LeMUR API calls, discontinued SDK usage, wrong auth headers, and no knowledge of newer features like the LLM Gateway, streaming v3, or voice agent framework integrations. This skill corrects those mistakes and adds coverage for the full current API surface.
+
+**Without the skill**, Claude will:
+- Use the deprecated LeMUR API instead of the LLM Gateway
+- Use `Authorization: Bearer KEY` instead of `Authorization: KEY`
+- Use `word_boost` instead of `keyterms_prompt`
+- Use discontinued Java/Go/C# SDKs
+- Miss all LiveKit/Pipecat-specific gotchas for voice agents
+- Use wrong model ID formats (`anthropic/claude-...` instead of `claude-...`)
+
+## What's covered
+
+| Area | Details |
+|------|---------|
+| **Pre-recorded transcription** | Universal-3-Pro, Universal-2, prompting, speech_models fallback |
+| **Streaming STT** | v3 protocol, v2 legacy, Whisper Streaming, temp tokens, error codes |
+| **Voice agents** | LiveKit and Pipecat integrations, u3-rt-pro, turn detection, silence tuning, latency optimization |
+| **LLM Gateway** | Chat completions, tool calling, agentic workflows, structured output caveats, full model list |
+| **Audio intelligence** | PII redaction, diarization, summarization, sentiment, entity detection, content safety, chapters |
+| **Speech understanding** | Translation, speaker identification, custom formatting |
+| **SDKs** | Python and JS/TS patterns, Ruby status, discontinued SDK warnings |
+| **API reference** | Full parameter list, export endpoints, webhooks, custom spelling, multichannel, code switching |
+
+## Installation
+
+### Claude Code
+
+```bash
+claude skill add --from ./assemblyai
+```
+
+Or add it as a [plugin skill](https://docs.anthropic.com/en/docs/claude-code/skills#sharing-skills) from this repo.
+
+## Skill structure
+
+The skill uses progressive disclosure to keep context usage efficient. The core `SKILL.md` (122 lines) is always loaded and contains auth patterns, model overview, common mistakes, and gotchas. Detailed reference files are only loaded when relevant:
+
+```
+assemblyai/
+├── SKILL.md                          # Core skill (always loaded)
+└── references/
+    ├── python-sdk.md                 # Python SDK patterns
+    ├── js-sdk.md                     # JS/TS SDK patterns
+    ├── streaming.md                  # Streaming STT protocol details
+    ├── voice-agents.md               # LiveKit, Pipecat integrations
+    ├── llm-gateway.md                # LLM Gateway models and usage
+    ├── speech-understanding.md       # Translation, speaker ID, formatting
+    ├── audio-intelligence.md         # PII, diarization, summarization, etc.
+    └── api-reference.md              # Full API parameters, endpoints, webhooks
+```
+
+## Eval results
+
+The `assemblyai-workspace/` directory contains test results comparing skill vs. no-skill outputs across three scenarios:
+
+| Test Case | With Skill | Without Skill |
+|-----------|-----------|---------------|
+| Basic transcription + summary (Python) | 4/4 | 4/4 |
+| Voice agent with LiveKit | 7/7 | 0/7 |
+| LLM Gateway + PII redaction (TypeScript) | 6/6 | 3/6 |
+| **Overall** | **17/17 (100%)** | **7/17 (41%)** |
+
+The skill provides the most value for voice agent integrations (where Claude has no training data for framework-specific pitfalls) and LLM Gateway usage (where Claude defaults to the deprecated LeMUR API).
